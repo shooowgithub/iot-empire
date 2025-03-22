@@ -1,0 +1,2286 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Empire - 物聯網帝國</title>
+    <style>
+        :root {
+            --primary: #2b5876;
+            --secondary: #4e4376;
+            --accent: #00a8cc;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+        }
+        * {margin: 0; padding: 0; box-sizing: border-box; font-family: 'Microsoft JhengHei', sans-serif;}
+        body {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--light);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        header { text-align: center; margin-bottom: 30px; }
+        h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); }
+        .game-container { display: flex; flex-direction: column; gap: 20px; }
+        @media (min-width: 768px) {.game-container {flex-direction: row;} .game-panel {flex: 1;} .stats-panel {width: 300px;}}
+        .panel {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .panel h2 { margin-bottom: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.2); padding-bottom: 10px; }
+        .stats-panel { position: sticky; top: 20px; }
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px;
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+        button {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 5px;
+            transition: background-color 0.3s;
+        }
+        button:hover { background-color: #0088a9; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .area-selection { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px; }
+        .area-card {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            width: 100%;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        @media (min-width: 768px) { .area-card { width: calc(50% - 10px); } }
+        .area-card:hover { background-color: rgba(255, 255, 255, 0.2); }
+        .area-card h3 { margin-bottom: 10px; color: var(--warning); }
+        .selected { border: 2px solid var(--accent); background-color: rgba(0, 168, 204, 0.2); }
+        .actions-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        .action-card {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .action-card h4 { color: var(--warning); margin-bottom: 8px; }
+        .action-card p { margin-bottom: 10px; font-size: 0.9em; }
+        .action-cost { font-size: 0.8em; color: var(--warning); }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .product-card {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        .product-stats {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .product-progress { margin-top: 10px; }
+        progress { width: 100%; height: 10px; border-radius: 5px; }
+        .event-log {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+        .log-entry {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .timestamp { color: #17a2b8; font-size: 0.8em; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        .close-modal { position: absolute; top: 10px; right: 15px; font-size: 1.5em; cursor: pointer; }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: transparent;
+            color: var(--light);
+            border: none;
+        }
+        .tab.active { background-color: rgba(255, 255, 255, 0.1); border-bottom: 3px solid var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .market-trends { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 20px; }
+        .trend-card {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            width: 100%;
+        }
+        @media (min-width: 768px) { .trend-card { width: calc(50% - 10px); } }
+        .chart-container {
+            height: 150px;
+            margin: 15px 0;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            position: relative;
+        }
+        .chart-bar {
+            position: absolute;
+            bottom: 0;
+            width: 10%;
+            background-color: var(--accent);
+            left: 45%;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--accent);
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        .notification.show { opacity: 1; transform: translateY(0); }
+        .year-display { font-size: 1.2em; margin-bottom: 10px; text-align: center; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 168, 204, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 168, 204, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 168, 204, 0); }
+        }
+        .research-active { animation: pulse 2s infinite; }
+        .difficulty-selection { display: flex; justify-content: center; gap: 10px; margin: 20px 0; }
+        .difficulty-btn {
+            padding: 10px 20px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .difficulty-btn.selected { background-color: var(--accent); }
+        .financial-summary {
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .financial-item { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .expansion-requirements {
+            background-color: rgba(0, 123, 255, 0.1);
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .req-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .req-met { color: var(--success); }
+        .req-not-met { color: var(--warning); }
+        .badge {
+            display: inline-block;
+            font-size: 0.75em;
+            padding: 3px 6px;
+            border-radius: 10px;
+            margin-left: 5px;
+            background-color: var(--success);
+        }
+        .badge-warning { background-color: var(--warning); color: var(--dark); }
+        .highlight-card { animation: glow 2s infinite alternate; }
+        @keyframes glow {
+            from { box-shadow: 0 0 5px rgba(0, 168, 204, 0.5); }
+            to { box-shadow: 0 0 20px rgba(0, 168, 204, 0.9); }
+        }
+        .game-goal-banner {
+            background: linear-gradient(90deg, var(--primary), var(--accent), var(--primary));
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        .data-insight-box {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .data-insight-box h4 { color: var(--warning); margin-bottom: 8px; }
+        .insight-bonus {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed rgba(255, 255, 255, 0.2);
+            font-weight: bold;
+            color: var(--success);
+        }
+        .goals-panel {
+            background-color: rgba(40, 167, 69, 0.1);
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .goal-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .goal-progress {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .goal-progress progress { width: 100px; }
+        .completed { color: var(--success); }
+        .in-progress { color: var(--warning); }
+        .score-display {
+            font-size: 1.2em;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .top-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        @media (min-width: 768px) {
+            .top-controls {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: flex-start;
+            }
+            .event-panel {
+                flex: 1;
+                margin-right: 10px;
+            }
+        }
+        .event-panel {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .ai-assistant {
+            background-color: rgba(0, 123, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 4px solid var(--accent);
+            margin-top: 10px;
+        }
+        .ai-assistant h4 {
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>IoT Empire - 物聯網帝國</h1>
+            <p>建立你的物聯網商業帝國，在數位化的未來中稱霸市場</p>
+        </header>
+        
+        <div id="intro-panel" class="panel">
+            <h2>遊戲開始</h2>
+            <p>歡迎來到物聯網帝國！你即將建立自己的物聯網企業，從一個小型創業公司成長為全球科技巨頭。</p>
+            
+            <div class="difficulty-selection">
+                <h3>選擇遊戲難度：</h3>
+                <button class="difficulty-btn selected" data-difficulty="easy">簡單</button>
+                <button class="difficulty-btn" data-difficulty="normal">一般</button>
+                <button class="difficulty-btn" data-difficulty="hard">困難</button>
+            </div>
+            
+            <p>請選擇你要專注的物聯網領域：</p>
+            
+            <div class="area-selection">
+                <div class="area-card" data-area="smart-home">
+                    <h3>智慧家居</h3>
+                    <p>專注於開發智慧家電、安全系統和家庭自動化產品。</p>
+                    <p><strong>優勢：</strong> 消費市場廣闊，進入門檻較低</p>
+                </div>
+                
+                <div class="area-card" data-area="health-tech">
+                    <h3>健康監控</h3>
+                    <p>開發用於健康追蹤、遠程醫療和個人健康管理的設備。</p>
+                    <p><strong>優勢：</strong> 高利潤率，用戶忠誠度高</p>
+                </div>
+                
+                <div class="area-card" data-area="smart-city">
+                    <h3>智慧城市</h3>
+                    <p>開發用於城市管理、交通監控和環境監測的解決方案。</p>
+                    <p><strong>優勢：</strong> 大規模合約，長期穩定收入</p>
+                </div>
+                
+                <div class="area-card" data-area="industrial-iot">
+                    <h3>工業物聯網</h3>
+                    <p>為製造業、物流和工業自動化提供解決方案。</p>
+                    <p><strong>優勢：</strong> 高價值客戶，技術壁壘高</p>
+                </div>
+            </div>
+            
+            <button id="start-game" disabled>開始創業</button>
+        </div>
+        
+        <div id="main-game" style="display: none;" class="game-container">
+            <div class="game-panel">
+                <div class="game-goal-banner">
+                    遊戲目標：公司估值達到$10,000,000、市場份額達到20%且擁有3個運營地區
+                </div>
+                
+                <div class="top-controls">
+                    <div class="event-panel">
+                        <h3>事件日誌</h3>
+                        <div id="event-log" class="event-log">
+                            <div class="log-entry">
+                                <span class="timestamp">第1年 - 第1季</span>
+                                <p>恭喜你創立了新的物聯網公司！開始你的創業旅程吧。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div class="year-display" id="year-display">第1年 - 第1季</div>
+                        <button id="next-quarter" style="width: 100%;">進入下一季度</button>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <h2>公司管理</h2>
+                    <div class="tabs">
+                        <button class="tab active" data-tab="products">產品研發</button>
+                        <button class="tab" data-tab="market">市場營銷</button>
+                        <button class="tab" data-tab="data">數據分析</button>
+                        <button class="tab" data-tab="operations">營運管理</button>
+                    </div>
+                    
+                    <div id="products-tab" class="tab-content active">
+                        <h3>產品研發中心</h3>
+                        
+                        <div class="actions-container">
+                            <div class="action-card">
+                                <h4>研發新產品</h4>
+                                <p>投入資源研發新的物聯網設備</p>
+                                <p class="action-cost">成本: $50,000</p>
+                                <p>成功率: <span id="develop-success-rate">90%</span></p>
+                                <button id="develop-product">開始研發</button>
+                            </div>
+                            
+                            <div class="action-card">
+                                <h4>升級現有產品</h4>
+                                <p>改進現有產品的功能和品質</p>
+                                <p class="action-cost">成本: $20,000 / 產品</p>
+                                <p>成功率: <span id="upgrade-success-rate">95%</span></p>
+                                <button id="upgrade-product" disabled>選擇產品升級</button>
+                            </div>
+                            
+                            <div class="action-card">
+                                <h4>申請專利</h4>
+                                <p>為您的創新技術申請專利保護</p>
+                                <p class="action-cost">成本: $30,000 / 專利</p>
+                                <p>成功率: <span id="patent-success-rate">80%</span></p>
+                                <button id="apply-patent" disabled>申請專利</button>
+                            </div>
+                        </div>
+                        
+                        <h3>產品線</h3>
+                        <div id="product-list" class="product-grid">
+                            <p>尚未開發任何產品。開始研發新產品吧！</p>
+                        </div>
+                    </div>
+                    
+                    <div id="market-tab" class="tab-content">
+                        <h3>市場營銷中心</h3>
+                        
+                        <div class="actions-container">
+                            <div class="action-card">
+                                <h4>廣告宣傳</h4>
+                                <p>在各種媒體平台投放廣告</p>
+                                <p class="action-cost">成本: $15,000 / 季度</p>
+                                <p>成功率: <span id="launchAds-success-rate">90%</span></p>
+                                <button id="launch-ads">投放廣告</button>
+                            </div>
+                            
+                            <div class="action-card">
+                                <h4>參加科技展會</h4>
+                                <p>在行業展會上展示你的產品</p>
+                                <p class="action-cost">成本: $40,000</p>
+                                <p>成功率: <span id="attendExhibition-success-rate">85%</span></p>
+                                <button id="attend-exhibition">參加展會</button>
+                            </div>
+                            
+                            <div class="action-card">
+                                <h4>拓展銷售渠道</h4>
+                                <p>與零售商或分銷商建立合作關係</p>
+                                <p class="action-cost">成本: $25,000</p>
+                                <p>成功率: <span id="expandChannels-success-rate">85%</span></p>
+                                <button id="expand-channels">拓展渠道</button>
+                            </div>
+                        </div>
+                        
+                        <h3>市場趨勢</h3>
+                        <div class="market-trends">
+                            <div class="trend-card">
+                                <h4>消費者需求</h4>
+                                <p id="consumer-demand">市場對智能設備的需求穩定增長中。</p>
+                                <div class="chart-container" id="demand-chart"></div>
+                                <div><span>需求指數: </span><span id="demand-index">50</span></div>
+                            </div>
+                            
+                            <div class="trend-card">
+                                <h4>競爭情況</h4>
+                                <p id="competition-status">目前市場競爭較為溫和，有足夠空間發展。</p>
+                                <div class="chart-container" id="competition-chart"></div>
+                                <div><span>競爭強度: </span><span id="competition-index">40</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="data-tab" class="tab-content">
+                        <h3>數據分析中心</h3>
+                        
+                        <div class="actions-container">
+                            <div class="action-card">
+                                <h4>建立數據平台</h4>
+                                <p>開發一個用於收集和處理IoT數據的平台</p>
+                                <p class="action-cost">成本: $60,000</p>
+                                <p>成功率: <span id="buildDataPlatform-success-rate">85%</span></p>
+                                <button id="build-data-platform">建立平台</button>
+                            </div>
+                            
+                            <div class="action-card">
+                                <h4>數據分析</h4>
+                                <p>分析收集到的數據以獲取商業洞見</p>
+                                <p class="action-cost">成本: $10,000</p>
+                                <p>成功率: <span id="analyzeData-success-rate">90%</span></p>
+                                <button id="analyze-data" disabled>分析數據</button>
+                            </div>
+                            
+                            <div class="action-card">
+                                <h4>推出數據服務</h4>
+                                <p>將分析結果打包成服務出售給其他企業</p>
+                                <p class="action-cost">成本: $20,000</p>
+                                <p>成功率: <span id="launchDataService-success-rate">75%</span></p>
+                                <button id="launch-data-service" disabled>推出服務</button>
+                            </div>
+                        </div>
+                        
+                        <h3>數據見解</h3>
+                        <div id="data-insights" class="panel" style="background-color: rgba(0,0,0,0.2);">
+                            <p>尚未建立數據分析平台。建立平台後才能獲取數據見解。</p>
+                        </div>
+                        
+                        <div id="ai-assistant" class="ai-assistant" style="display:none;">
+                            <h4>AI助手建議</h4>
+                            <p id="ai-suggestion">尚未獲得AI分析建議。</p>
+                        </div>
+                    </div>
+                    
+                    <div id="operations-tab" class="tab-content">
+                        <h3>營運管理中心</h3>
+                        
+                        <div class="actions-container">
+                            <div class="action-card">
+                                <h4>招聘員工</h4>
+                                <p>招募研發、營銷和運營人才</p>
+                                <p class="action-cost">成本: $10,000 / 員工</p>
+                                <p>成功率: <span id="hireStaff-success-rate">95%</span></p>
+                                <button id="hire-staff">招聘員工</button>
+                            </div>
+                            
+                            <div id="investor-card" class="action-card">
+                                <h4>尋找投資者 <span id="investor-badge" class="badge badge-warning">需要聲譽</span></h4>
+                                <p>吸引風險投資或天使投資</p>
+                                <p class="action-cost">成本: $5,000 (準備材料)</p>
+                                <p>成功率: <span id="seekInvestors-success-rate">30%</span></p>
+                                <div class="expansion-requirements">
+                                    <h5>解鎖條件:</h5>
+                                    <div class="req-item">
+                                        <span>品牌聲譽: </span>
+                                        <span id="investor-req">1點 <span class="req-not-met">尚未達成</span></span>
+                                    </div>
+                                </div>
+                                <button id="seek-investors" disabled>尋找投資</button>
+                            </div>
+                            
+                            <div id="expansion-card" class="action-card">
+                                <h4>擴展國際市場 <span id="expansion-badge" class="badge badge-warning">解鎖條件</span></h4>
+                                <p>將業務擴展到其他國家和地區</p>
+                                <p class="action-cost">成本: $100,000</p>
+                                <p>成功率: <span id="expandGlobally-success-rate">70%</span></p>
+                                <div id="expansion-requirements" class="expansion-requirements">
+                                    <h5>解鎖條件:</h5>
+                                    <div class="req-item">
+                                        <span>公司估值: </span>
+                                        <span id="val-req">$2,000,000 <span class="req-not-met">尚未達成</span></span>
+                                    </div>
+                                    <div class="req-item">
+                                        <span>已上市產品數: </span>
+                                        <span id="product-req">2個 <span class="req-not-met">尚未達成</span></span>
+                                    </div>
+                                    <div class="req-item">
+                                        <span>品牌聲譽: </span>
+                                        <span id="reputation-req">10點 <span class="req-not-met">尚未達成</span></span>
+                                    </div>
+                                </div>
+                                <button id="expand-globally" disabled>國際擴張</button>
+                            </div>
+                        </div>
+                        
+                        <h3>公司狀況</h3>
+                        <div class="company-status">
+                            <div class="stat-item">
+                                <span>員工數量:</span>
+                                <span id="staff-count">3</span>
+                            </div>
+                            <div class="stat-item">
+                                <span>運營地區:</span>
+                                <span id="operation-regions-ops">1</span>
+                            </div>
+                        </div>
+                        
+                        <h3>財務摘要</h3>
+                        <div class="financial-summary">
+                            <div class="financial-item">
+                                <span>人力成本:</span>
+                                <span id="staff-expenses">$15,000/季</span>
+                            </div>
+                            <div class="financial-item" style="font-weight: bold; margin-top: 5px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px;">
+                                <span>每季淨收益:</span>
+                                <span id="net-income">$-15,000</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stats-panel panel">
+                <h2>公司概況</h2>
+                <div class="stat-item">
+                    <span>公司資金:</span>
+                    <span id="company-funds">$500,000</span>
+                </div>
+                <div class="stat-item">
+                    <span>季度收入:</span>
+                    <span id="quarterly-revenue">$0</span>
+                </div>
+                <div class="stat-item">
+                    <span>產品數量:</span>
+                    <span id="product-count">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>專利數量:</span>
+                    <span id="patent-count">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>市場份額:</span>
+                    <span id="market-share">0%</span>
+                </div>
+                <div class="stat-item">
+                    <span>品牌聲譽:</span>
+                    <span id="brand-reputation">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>研發能力:</span>
+                    <span id="rd-capability">1</span>
+                </div>
+                <div class="stat-item">
+                    <span>數據能力:</span>
+                    <span id="data-capability">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>公司估值:</span>
+                    <span id="company-valuation-stats">$500,000</span>
+                </div>
+                <div class="stat-item">
+                    <span>運營地區:</span>
+                    <span id="operation-regions-stats">1</span>
+                </div>
+                
+                <div class="goals-panel">
+                    <h3>目標進度</h3>
+                    <div class="goal-item">
+                        <span>公司估值:</span>
+                        <div class="goal-progress">
+                            <progress id="valuation-progress" value="500000" max="10000000"></progress>
+                            <span id="valuation-percentage">5%</span>
+                        </div>
+                    </div>
+                    <div class="goal-item">
+                        <span>市場份額:</span>
+                        <div class="goal-progress">
+                            <progress id="market-share-progress" value="0" max="20"></progress>
+                            <span id="market-share-percentage">0%</span>
+                        </div>
+                    </div>
+                    <div class="goal-item">
+                        <span>運營地區:</span>
+                        <div class="goal-progress">
+                            <progress id="regions-progress" value="1" max="3"></progress>
+                            <span id="regions-percentage">33%</span>
+                        </div>
+                    </div>
+                    <div class="score-display" id="current-score">
+                        得分: 0
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 20px;">目前進度</h3>
+                <div class="stat-item">
+                    <span>物聯網領域:</span>
+                    <span id="iot-area">未選擇</span>
+                </div>
+                <div class="stat-item">
+                    <span>難度設定:</span>
+                    <span id="difficulty-display">簡單</span>
+                </div>
+                
+                <div class="stat-item" style="margin-top: 15px; background-color: rgba(40, 167, 69, 0.2);">
+                    <span>技術策略等級:</span>
+                    <span id="tech-strategy-level">1</span>
+                </div>
+                <div class="stat-item" style="background-color: rgba(0, 123, 255, 0.2);">
+                    <span>市場策略等級:</span>
+                    <span id="market-strategy-level">1</span>
+                </div>
+                <div class="stat-item" style="background-color: rgba(255, 193, 7, 0.2);">
+                    <span>運營策略等級:</span>
+                    <span id="ops-strategy-level">1</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="modal-title">標題</h2>
+            <div id="modal-content">內容將在這裡顯示</div>
+            <div id="modal-actions">
+                <button id="modal-confirm">確認</button>
+                <button id="modal-cancel">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="notification" class="notification"></div>
+    
+<script>
+// 遊戲配置資料
+const gameConfig = {
+    productTemplates: {
+        'smart-home': [
+            { name: '智能家居控制中心', cost: 50000, revenue: 25000, development: 2, description: '集中控制所有智能家居設備的核心系統' },
+            { name: '智能安全監控系統', cost: 60000, revenue: 30000, development: 2, description: '具有AI識別功能的家庭安全監控系統' },
+            { name: '智能溫控器', cost: 40000, revenue: 20000, development: 1, description: '可自動調節居家溫度的智能設備' },
+            { name: '智能照明系統', cost: 35000, revenue: 18000, development: 1, description: '根據時間和活動自動調整照明的系統' },
+            { name: '智能家電控制器', cost: 45000, revenue: 22000, development: 2, description: '可控制各類家電的智能設備' }
+        ],
+        'health-tech': [
+            { name: '健康追蹤手環', cost: 60000, revenue: 35000, development: 2, description: '追蹤心率、步數、睡眠等健康指標的穿戴設備' },
+            { name: '血糖監測系統', cost: 70000, revenue: 40000, development: 3, description: '實時監測血糖水平的智能設備' },
+            { name: '遠程醫療平台', cost: 80000, revenue: 50000, development: 3, description: '連接患者與醫生的遠程診療系統' },
+            { name: '智能藥盒', cost: 45000, revenue: 25000, development: 2, description: '提醒服藥並追蹤藥物使用情況的設備' },
+            { name: '睡眠監測器', cost: 50000, revenue: 30000, development: 2, description: '分析睡眠質量和模式的智能設備' }
+        ],
+        'smart-city': [
+            { name: '智能交通燈系統', cost: 100000, revenue: 60000, development: 3, description: '根據交通流量智能調節的交通燈系統' },
+            { name: '城市環境監測網', cost: 90000, revenue: 55000, development: 2, description: '監測空氣質量、噪音、溫度等環境參數的感測器網路' },
+            { name: '智能停車系統', cost: 80000, revenue: 50000, development: 2, description: '幫助司機找到空車位並管理停車場使用情況' },
+            { name: '公共安全監控網', cost: 110000, revenue: 65000, development: 3, description: '具備AI識別功能的城市安全監控系統' },
+            { name: '智能垃圾管理系統', cost: 70000, revenue: 40000, development: 2, description: '監測垃圾桶填充情況並優化收集路線的系統' }
+        ],
+        'industrial-iot': [
+            { name: '工業設備監測系統', cost: 120000, revenue: 70000, development: 3, description: '預測性維護及設備狀態監測系統' },
+            { name: '倉儲自動化解決方案', cost: 100000, revenue: 60000, development: 2, description: '自動化倉庫管理和庫存追蹤系統' },
+            { name: '工業機器人控制平台', cost: 130000, revenue: 75000, development: 3, description: '連接和管理工業機器人的集中式平台' },
+            { name: '供應鏈追蹤系統', cost: 90000, revenue: 55000, development: 2, description: '實時追蹤產品從原料到成品的整個流程' },
+            { name: '能源管理系統', cost: 80000, revenue: 45000, development: 2, description: '監測和優化工業設施能源使用的系統' }
+        ]
+    },
+    
+    dataInsights: [
+        {id: 'user-behavior', title: '用戶行為分析', content: '用戶主要在特定時段使用產品，顯示明確的使用模式。', bonus: { type: 'productRevenue', value: 0.1, description: '產品收入+10%' }},
+        {id: 'market-trend', title: '市場趨勢預測', content: '市場對智能設備的需求正在加速增長，未來3年將保持20%的年增長率。', bonus: { type: 'marketShare', value: 2, description: '市場份額+2%' }},
+        {id: 'product-improvement', title: '產品改進機會', content: '用戶反饋指出產品的特定功能可以大幅改進，提升用戶體驗。', bonus: { type: 'rdEfficiency', value: 0.3, description: '研發效率+30%' }},
+        {id: 'brand-positioning', title: '品牌定位分析', content: '數據顯示您的品牌在特定市場區隔中具有獨特優勢。', bonus: { type: 'brandReputation', value: 2, description: '品牌聲譽+2' }},
+        {id: 'development-optimization', title: '開發流程優化', content: '分析顯示產品開發週期可以通過特定改進縮短。', bonus: { type: 'developmentSpeed', value: 0.2, description: '開發速度+20%' }}
+    ],
+    
+    aiSuggestions: [
+        {condition: state => state.funds < 100000 && state.quarterlyRevenue < state.staffExpenses, suggestion: "公司資金偏低且收入不足以支付人力成本。建議先投資開發一款產品以創造穩定收入，同時考慮參加科技展會吸引投資者。", priority: 5},
+        {condition: state => state.products.length === 0 && state.funds > 50000, suggestion: "尚未開發任何產品。建議立即開始研發第一款產品，為公司創造收入來源。", priority: 10},
+        {condition: state => state.brandReputation >= 1 && !state.investorAccessible, suggestion: "公司品牌聲譽已達1點，現在可以尋找投資者了。額外資金將幫助加速公司成長。", priority: 8},
+        {condition: state => state.products.filter(p => !p.inDevelopment).length > 0 && state.patents === 0, suggestion: "已有產品上市，但尚未申請專利保護。專利可提升公司估值和市場競爭力，建議申請專利。", priority: 6},
+        {condition: state => state.products.filter(p => !p.inDevelopment).length >= 2 && !state.dataAnalyticsBuilt && state.funds > 60000, suggestion: "多款產品已上市，建立數據分析平台可獲取寶貴見解，提升產品性能和用戶體驗。", priority: 7},
+        {condition: state => state.marketShare > 5 && state.brandReputation < 10 && state.funds > 15000, suggestion: "市場份額良好但品牌聲譽有待提升。建議加大廣告投入，提高品牌知名度以達到國際擴張要求。", priority: 6},
+        {condition: state => state.globalExpansionPossible && state.funds > 100000, suggestion: "公司已達國際擴張條件！擴張到國際市場可大幅提升收入和公司估值，建議立即行動。", priority: 9},
+        {condition: state => state.products.some(p => p.level >= 2) && state.dataAnalyticsBuilt && !state.hasDataService, suggestion: "公司擁有成熟產品和數據平台，現在可以推出數據服務創造額外收入來源。", priority: 7},
+        {condition: state => state.products.filter(p => !p.inDevelopment).length > 0 && state.funds > 20000, suggestion: "升級現有產品可以增加收入。考慮將一些成功產品升級到更高等級。", priority: 4},
+        {condition: state => state.funds > 25000 && state.products.filter(p => !p.inDevelopment).length > 0, suggestion: "拓展銷售渠道可以增加產品的市場覆蓋範圍，提升銷售額。", priority: 5}
+    ],
+    
+    patentLibrary: {
+        'smart-home': [
+            { name: '智能家居設備自適應控制專利', description: '基於用戶行為自動調整家居環境的技術' },
+            { name: '智能家居安全加密協議專利', description: '保護家庭網路和設備安全的加密技術' },
+            { name: '低功耗智能感測器網路專利', description: '高效節能的感測器連接和通信技術' }
+        ],
+        'health-tech': [
+            { name: '生物信號監測算法專利', description: '準確測量和分析人體生物信號的算法' },
+            { name: '醫療數據安全存儲技術專利', description: '遵循醫療法規的數據加密和存儲技術' },
+            { name: '可穿戴設備電池優化專利', description: '延長可穿戴健康設備電池壽命的技術' }
+        ],
+        'smart-city': [
+            { name: '城市數據分析平台專利', description: '處理和分析大量城市運營數據的技術' },
+            { name: '智能電網負載均衡技術專利', description: '優化城市電力分配和使用的技術' },
+            { name: '城市交通流預測算法專利', description: '基於多源數據預測交通狀況的算法' }
+        ],
+        'industrial-iot': [
+            { name: '工業設備預測性維護算法專利', description: '預測設備故障並安排維護的算法' },
+            { name: '工業物聯網通信協議專利', description: '適用於工業環境的高可靠性通信協議' },
+            { name: '工業自動化控制系統專利', description: '精確控制工業流程和設備的系統' }
+        ]
+    },
+    
+    areaCharacteristics: {
+        'smart-home': {demandGrowthRate: 8, competitionLevel: 60, initialPatentRequirement: false},
+        'health-tech': {demandGrowthRate: 10, competitionLevel: 45, initialPatentRequirement: false},
+        'smart-city': {demandGrowthRate: 6, competitionLevel: 35, initialPatentRequirement: false},
+        'industrial-iot': {demandGrowthRate: 5, competitionLevel: 30, initialPatentRequirement: false}
+    },
+    
+    difficultySettings: {
+        'easy': {initialFunds: 500000, staffExpensesMultiplier: 0.5, revenueMultiplier: 1.5, randomEventChance: 0.2, badEventChance: 0.2, successRateBonus: 20},
+        'normal': {initialFunds: 400000, staffExpensesMultiplier: 0.7, revenueMultiplier: 1.0, randomEventChance: 0.3, badEventChance: 0.4, successRateBonus: 5},
+        'hard': {initialFunds: 300000, staffExpensesMultiplier: 0.9, revenueMultiplier: 0.7, randomEventChance: 0.4, badEventChance: 0.6, successRateBonus: -5}
+    },
+    
+    expansionRequirements: {valuation: 2000000, products: 2, reputation: 10},
+    investorRequirements: {reputation: 1},
+    scoreFactors: {valuation: 0.00005, marketShare: 3, regions: 20}
+};
+
+// 遊戲狀態
+const gameState = {
+    started: false,
+    area: '',
+    funds: 500000,
+    quarterlyRevenue: 0,
+    products: [],
+    patents: 0,
+    marketShare: 0,
+    brandReputation: 0,
+    rdCapability: 1,
+    dataCapability: 0,
+    dataAnalyticsBuilt: false,
+    year: 1,
+    quarter: 1,
+    staff: 3,
+    staffExpenses: 15000,
+    opExpenses: 0,
+    companyValuation: 500000,
+    operationRegions: 1,
+    events: [],
+    hasDataService: false,
+    productInDevelopment: false,
+    globalExpansionPossible: false,
+    globalExpansionNotified: false,
+    investorAccessible: false,
+    investorNotified: false,
+    techStrategyLevel: 1,
+    marketStrategyLevel: 1,
+    opsStrategyLevel: 1,
+    difficulty: 'easy',
+    demandIndex: 50,
+    competitionIndex: 40,
+    areaSpecificFactors: {
+        demandGrowthRate: 0,
+        competitionLevel: 0,
+        initialPatentRequirement: false
+    },
+    successRates: {
+        developProduct: 90,
+        upgradeProduct: 95,
+        applyPatent: 80,
+        launchAds: 90,
+        attendExhibition: 85,
+        expandChannels: 85,
+        buildDataPlatform: 85,
+        analyzeData: 90,
+        launchDataService: 75,
+        hireStaff: 95,
+        seekInvestors: 30,  // 初始設為30%
+        expandGlobally: 70
+    },
+    activeInsights: [],
+    insightBonuses: {
+        productRevenue: 0,
+        developmentSpeed: 0,
+        marketShare: 0,
+        brandReputation: 0,
+        rdEfficiency: 0
+    },
+    aiStatus: {
+        aiEnabled: false,
+        lastSuggestion: null,
+        suggestionCount: 0
+    },
+    score: 0
+};
+
+// 初始化遊戲
+function initGame() {
+    // 選擇難度
+    document.querySelectorAll('.difficulty-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            gameState.difficulty = this.dataset.difficulty;
+        });
+    });
+    
+    // 選擇領域
+    document.querySelectorAll('.area-card').forEach(card => {
+        card.addEventListener('click', function() {
+            document.querySelectorAll('.area-card').forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+            gameState.area = this.dataset.area;
+            document.getElementById('start-game').disabled = false;
+        });
+    });
+    
+    // 開始遊戲
+    document.getElementById('start-game').addEventListener('click', startGame);
+    
+    // 初始化標籤頁切換
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabId = this.dataset.tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+        });
+    });
+    
+    // 按鈕事件
+    document.getElementById('develop-product').addEventListener('click', developProduct);
+    document.getElementById('upgrade-product').addEventListener('click', upgradeProduct);
+    document.getElementById('apply-patent').addEventListener('click', applyPatent);
+    document.getElementById('launch-ads').addEventListener('click', launchAds);
+    document.getElementById('attend-exhibition').addEventListener('click', attendExhibition);
+    document.getElementById('expand-channels').addEventListener('click', expandChannels);
+    document.getElementById('build-data-platform').addEventListener('click', buildDataPlatform);
+    document.getElementById('analyze-data').addEventListener('click', analyzeData);
+    document.getElementById('launch-data-service').addEventListener('click', launchDataService);
+    document.getElementById('hire-staff').addEventListener('click', hireStaff);
+    document.getElementById('seek-investors').addEventListener('click', seekInvestors);
+    document.getElementById('expand-globally').addEventListener('click', expandGlobally);
+    document.getElementById('next-quarter').addEventListener('click', nextQuarter);
+    
+    // 模態框設置
+    document.querySelector('.close-modal').addEventListener('click', closeModal);
+    document.getElementById('modal-cancel').addEventListener('click', closeModal);
+}
+
+// 顯示通知
+function showNotification(message, type = 'info') {
+    const notificationEl = document.querySelector('.notification');
+    notificationEl.textContent = message;
+    notificationEl.className = 'notification show';
+    
+    if (type === 'success') notificationEl.style.backgroundColor = '#28a745';
+    else if (type === 'error') notificationEl.style.backgroundColor = '#dc3545';
+    else if (type === 'warning') {
+        notificationEl.style.backgroundColor = '#ffc107';
+        notificationEl.style.color = '#343a40';
+    } else notificationEl.style.backgroundColor = '#00a8cc';
+    
+    setTimeout(() => {notificationEl.className = 'notification';}, 3000);
+}
+
+// 模態框
+function openModal(title, content, onConfirm = null) {
+    const modalEl = document.getElementById('modal');
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-content').innerHTML = content;
+    
+    if (onConfirm) {
+        document.getElementById('modal-confirm').style.display = 'inline-block';
+        document.getElementById('modal-confirm').onclick = onConfirm;
+    } else {
+        document.getElementById('modal-confirm').style.display = 'none';
+    }
+    
+    modalEl.style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('modal').style.display = 'none';
+}
+
+// 檢查操作是否成功
+function isActionSuccessful(successRate) {
+    return Math.random() * 100 < successRate;
+}
+
+// 更新成功率顯示
+function updateSuccessRatesDisplay() {
+    for (const key in gameState.successRates) {
+        const el = document.getElementById(`${key}-success-rate`);
+        if (el) el.textContent = `${Math.round(gameState.successRates[key])}%`;
+    }
+}
+
+// 添加事件日誌
+function addEventLog(message) {
+    const logEntry = document.createElement('div');
+    logEntry.className = 'log-entry';
+    
+    const timestamp = document.createElement('span');
+    timestamp.className = 'timestamp';
+    timestamp.textContent = `第${gameState.year}年 - 第${gameState.quarter}季`;
+    
+    const content = document.createElement('p');
+    content.textContent = message;
+    
+    logEntry.appendChild(timestamp);
+    logEntry.appendChild(content);
+    
+    document.getElementById('event-log').prepend(logEntry);
+    gameState.events.push({year: gameState.year, quarter: gameState.quarter, message: message});
+}
+
+// AI建議
+function updateAISuggestion() {
+    if (!gameState.aiStatus.aiEnabled) return;
+    
+    const applicable = gameConfig.aiSuggestions
+        .filter(s => s.condition(gameState))
+        .sort((a, b) => b.priority - a.priority);
+    
+    if (applicable.length > 0) {
+        const suggestion = applicable[0];
+        if (gameState.aiStatus.lastSuggestion !== suggestion.suggestion) {
+            gameState.aiStatus.lastSuggestion = suggestion.suggestion;
+            document.getElementById('ai-suggestion').textContent = suggestion.suggestion;
+            document.getElementById('ai-assistant').style.display = 'block';
+            
+            if (gameState.aiStatus.suggestionCount === 0) {
+                showNotification("AI助手提供了新的建議！", "info");
+            }
+            
+            gameState.aiStatus.suggestionCount++;
+        }
+    } else if (document.getElementById('ai-assistant').style.display === 'block') {
+        document.getElementById('ai-assistant').style.display = 'none';
+    }
+}
+
+// 開始遊戲
+function startGame() {
+    gameState.started = true;
+    document.getElementById('intro-panel').style.display = 'none';
+    document.getElementById('main-game').style.display = 'flex';
+    
+    applyDifficultySettings();
+    
+    let areaName = '';
+    switch(gameState.area) {
+        case 'smart-home': areaName = '智慧家居'; break;
+        case 'health-tech': areaName = '健康監控'; break;
+        case 'smart-city': areaName = '智慧城市'; break;
+        case 'industrial-iot': areaName = '工業物聯網'; break;
+    }
+    document.getElementById('iot-area').textContent = areaName;
+    document.getElementById('difficulty-display').textContent = 
+        gameState.difficulty === 'easy' ? '簡單' : 
+        gameState.difficulty === 'normal' ? '一般' : '困難';
+    
+    applyAreaCharacteristics();
+    
+    addEventLog(`你成立了一家專注於${areaName}的物聯網公司，初始資金$${gameState.funds.toLocaleString()}。`);
+    
+    updateSuccessRatesDisplay();
+    
+    updateDemandChart();
+    updateCompetitionChart();
+    
+    addEventLog(`提示：當品牌聲譽達到1點時，可以尋找投資者。投資者的成功率會隨著品牌聲譽提高。`);
+    addEventLog(`提示：當公司估值達到$2,000,000、有2個已上市產品且品牌聲譽達到10點時，可以擴張到國際市場。`);
+    addEventLog(`提示：數據分析可以提供寶貴的見解，幫助提升產品性能、品牌聲譽和市場份額。`);
+    
+    gameState.aiStatus.aiEnabled = true;
+    
+    updateUI();
+    updateFinancialSummary();
+    updateExpansionRequirements();
+    updateInvestorRequirements();
+    updateGoalProgress();
+    updateAISuggestion();
+}
+
+// 套用難度設定
+function applyDifficultySettings() {
+    const settings = gameConfig.difficultySettings[gameState.difficulty];
+    
+    gameState.funds = settings.initialFunds;
+    gameState.staffExpenses = Math.round(5000 * 3 * settings.staffExpensesMultiplier);
+    
+    for (let key in gameState.successRates) {
+        gameState.successRates[key] = Math.min(95, Math.max(20, gameState.successRates[key] + settings.successRateBonus));
+    }
+    
+    gameState.successRates.seekInvestors = 30;
+    
+    document.getElementById('staff-expenses').textContent = `$${gameState.staffExpenses.toLocaleString()}/季`;
+}
+
+// 套用領域特性
+function applyAreaCharacteristics() {
+    const areaProps = gameConfig.areaCharacteristics[gameState.area];
+    const diffSettings = gameConfig.difficultySettings[gameState.difficulty];
+    
+    gameState.demandIndex = 50;
+    gameState.competitionIndex = areaProps.competitionLevel;
+    
+    if (gameState.area === 'health-tech') {
+        gameState.successRates.developProduct = 75 + diffSettings.successRateBonus;
+        gameState.successRates.applyPatent = 60 + diffSettings.successRateBonus;
+    } else if (gameState.area === 'smart-city') {
+        gameState.successRates.expandChannels = 60 + diffSettings.successRateBonus;
+        gameState.successRates.seekInvestors = 30;
+    } else if (gameState.area === 'industrial-iot') {
+        gameState.successRates.developProduct = 70 + diffSettings.successRateBonus;
+        gameState.successRates.launchDataService = 75 + diffSettings.successRateBonus;
+    } else {
+        gameState.successRates.expandChannels = 75 + diffSettings.successRateBonus;
+    }
+    
+    gameState.areaSpecificFactors = {
+        demandGrowthRate: areaProps.demandGrowthRate,
+        competitionLevel: areaProps.competitionLevel,
+        initialPatentRequirement: areaProps.initialPatentRequirement
+    };
+}
+
+// 更新UI (簡化版)
+function updateUI() {
+    // 基本信息更新
+    document.getElementById('company-funds').textContent = `$${gameState.funds.toLocaleString()}`;
+    document.getElementById('quarterly-revenue').textContent = `$${gameState.quarterlyRevenue.toLocaleString()}`;
+    document.getElementById('product-count').textContent = gameState.products.length;
+    document.getElementById('patent-count').textContent = gameState.patents;
+    document.getElementById('market-share').textContent = `${gameState.marketShare}%`;
+    document.getElementById('brand-reputation').textContent = gameState.brandReputation;
+    document.getElementById('rd-capability').textContent = gameState.rdCapability.toFixed(1);
+    document.getElementById('data-capability').textContent = gameState.dataCapability.toFixed(1);
+    document.getElementById('year-display').textContent = `第${gameState.year}年 - 第${gameState.quarter}季`;
+    document.getElementById('staff-count').textContent = gameState.staff;
+    
+    // 公司估值和運營地區更新
+    document.getElementById('company-valuation-stats').textContent = `$${gameState.companyValuation.toLocaleString()}`;
+    document.getElementById('operation-regions-stats').textContent = gameState.operationRegions;
+    document.getElementById('operation-regions-ops').textContent = gameState.operationRegions;
+    
+    // 策略等級
+    document.getElementById('tech-strategy-level').textContent = gameState.techStrategyLevel;
+    document.getElementById('market-strategy-level').textContent = gameState.marketStrategyLevel;
+    document.getElementById('ops-strategy-level').textContent = gameState.opsStrategyLevel;
+    
+    // 市場指標
+    document.getElementById('demand-index').textContent = gameState.demandIndex;
+    document.getElementById('competition-index').textContent = gameState.competitionIndex;
+    
+    // 按鈕禁用狀態
+    document.getElementById('develop-product').disabled = gameState.funds < 50000 || gameState.productInDevelopment;
+    document.getElementById('upgrade-product').disabled = gameState.products.filter(p => !p.inDevelopment).length === 0 || gameState.funds < 20000;
+    document.getElementById('apply-patent').disabled = (!canApplyPatent() && !gameState.areaSpecificFactors.initialPatentRequirement) || gameState.funds < 30000;
+    document.getElementById('launch-ads').disabled = gameState.funds < 15000;
+    document.getElementById('attend-exhibition').disabled = gameState.funds < 40000;
+    document.getElementById('expand-channels').disabled = gameState.funds < 25000;
+    document.getElementById('build-data-platform').disabled = gameState.funds < 60000 || gameState.dataAnalyticsBuilt;
+    document.getElementById('analyze-data').disabled = !gameState.dataAnalyticsBuilt || gameState.funds < 10000;
+    document.getElementById('launch-data-service').disabled = !gameState.dataAnalyticsBuilt || gameState.hasDataService || gameState.funds < 20000;
+    document.getElementById('hire-staff').disabled = gameState.funds < 10000;
+    document.getElementById('seek-investors').disabled = !gameState.investorAccessible || gameState.funds < 5000;
+    document.getElementById('expand-globally').disabled = !gameState.globalExpansionPossible || gameState.funds < 100000;
+    
+    updateProductList();
+    updateExpansionRequirements();
+    updateInvestorRequirements();
+    updateGoalProgress();
+    updateAISuggestion();
+}
+
+// 更新目標進度
+function updateGoalProgress() {
+    const valuationPercent = Math.min(100, Math.round(gameState.companyValuation / 100000));
+    document.getElementById('valuation-progress').value = gameState.companyValuation;
+    document.getElementById('valuation-percentage').textContent = `${valuationPercent}%`;
+    document.getElementById('valuation-percentage').className = valuationPercent >= 100 ? "completed" : "in-progress";
+    
+    const marketSharePercent = Math.min(100, Math.round(gameState.marketShare / 20 * 100));
+    document.getElementById('market-share-progress').value = gameState.marketShare;
+    document.getElementById('market-share-percentage').textContent = `${marketSharePercent}%`;
+    document.getElementById('market-share-percentage').className = marketSharePercent >= 100 ? "completed" : "in-progress";
+    
+    const regionsPercent = Math.min(100, Math.round(gameState.operationRegions / 3 * 100));
+    document.getElementById('regions-progress').value = gameState.operationRegions;
+    document.getElementById('regions-percentage').textContent = `${regionsPercent}%`;
+    document.getElementById('regions-percentage').className = regionsPercent >= 100 ? "completed" : "in-progress";
+    
+    updateScore();
+}
+
+// 計算得分
+function updateScore() {
+    const valuationScore = Math.floor(gameState.companyValuation * gameConfig.scoreFactors.valuation);
+    const marketShareScore = Math.floor(gameState.marketShare * gameConfig.scoreFactors.marketShare);
+    const regionsScore = Math.floor(gameState.operationRegions * gameConfig.scoreFactors.regions);
+    
+    gameState.score = valuationScore + marketShareScore + regionsScore;
+    document.getElementById('current-score').textContent = `得分: ${gameState.score}`;
+}
+
+// 更新國際擴張需求
+function updateExpansionRequirements() {
+    const reqs = gameConfig.expansionRequirements;
+    
+    const valuationMet = gameState.companyValuation >= reqs.valuation;
+    document.getElementById('val-req').innerHTML = `$${reqs.valuation.toLocaleString()} <span class="${valuationMet ? 'req-met' : 'req-not-met'}">${valuationMet ? '已達成' : '尚未達成'}</span>`;
+    
+    const productsCount = gameState.products.filter(p => !p.inDevelopment).length;
+    const productsMet = productsCount >= reqs.products;
+    document.getElementById('product-req').innerHTML = `${reqs.products}個 <span class="${productsMet ? 'req-met' : 'req-not-met'}">${productsMet ? '已達成' : '尚未達成'}</span>`;
+    
+    const reputationMet = gameState.brandReputation >= reqs.reputation;
+    document.getElementById('reputation-req').innerHTML = `${reqs.reputation}點 <span class="${reputationMet ? 'req-met' : 'req-not-met'}">${reputationMet ? '已達成' : '尚未達成'}</span>`;
+    
+    if (valuationMet && productsMet && reputationMet) {
+        if (!gameState.globalExpansionPossible) {
+            document.getElementById('expansion-card').classList.add('highlight-card');
+            document.getElementById('expansion-badge').textContent = '已解鎖';
+            document.getElementById('expansion-badge').classList.remove('badge-warning');
+            document.getElementById('expansion-badge').classList.add('badge');
+            gameState.globalExpansionPossible = true;
+            
+            if (!gameState.globalExpansionNotified) {
+                showNotification("公司已達到國際擴張條件！", "success");
+                addEventLog("公司已經具備了國際擴張的條件！可以在「營運管理」中選擇「擴展國際市場」。");
+                gameState.globalExpansionNotified = true;
+            }
+        }
+    } else {
+        document.getElementById('expansion-card').classList.remove('highlight-card');
+        document.getElementById('expansion-badge').textContent = '解鎖條件';
+        document.getElementById('expansion-badge').classList.add('badge-warning');
+        document.getElementById('expansion-badge').classList.remove('badge');
+        gameState.globalExpansionPossible = false;
+    }
+}
+
+// 更新投資者需求
+function updateInvestorRequirements() {
+    const reputationMet = gameState.brandReputation >= gameConfig.investorRequirements.reputation;
+    document.getElementById('investor-req').innerHTML = `${gameConfig.investorRequirements.reputation}點 <span class="${reputationMet ? 'req-met' : 'req-not-met'}">${reputationMet ? '已達成' : '尚未達成'}</span>`;
+    
+    if (reputationMet) {
+        if (!gameState.investorAccessible) {
+            document.getElementById('investor-card').classList.add('highlight-card');
+            document.getElementById('investor-badge').textContent = '已解鎖';
+            document.getElementById('investor-badge').classList.remove('badge-warning');
+            document.getElementById('investor-badge').classList.add('badge');
+            gameState.investorAccessible = true;
+            
+            if (!gameState.investorNotified) {
+                showNotification("聲譽達到1點！現在可以尋找投資者了", "success");
+                addEventLog("你的公司獲得了一定的市場聲譽，現在可以開始尋找投資者了。");
+                gameState.investorNotified = true;
+            }
+        }
+        
+        // 更新投資者成功率（每點聲譽增加3%）
+        gameState.successRates.seekInvestors = Math.min(90, 30 + gameState.brandReputation * 3);
+        const investorSuccessRateEl = document.getElementById('seekInvestors-success-rate');
+        if (investorSuccessRateEl) {
+            investorSuccessRateEl.textContent = `${Math.round(gameState.successRates.seekInvestors)}%`;
+        }
+    } else {
+        document.getElementById('investor-card').classList.remove('highlight-card');
+        document.getElementById('investor-badge').textContent = '需要聲譽';
+        document.getElementById('investor-badge').classList.add('badge-warning');
+        document.getElementById('investor-badge').classList.remove('badge');
+        gameState.investorAccessible = false;
+    }
+}
+
+// 檢查能否申請專利
+function canApplyPatent() {
+    return gameState.products.length > 0 || gameState.rdCapability >= 1.5;
+}
+
+// 更新財務摘要
+function updateFinancialSummary() {
+    document.getElementById('staff-expenses').textContent = `$${gameState.staffExpenses.toLocaleString()}/季`;
+    
+    const netIncome = gameState.quarterlyRevenue - gameState.staffExpenses;
+    document.getElementById('net-income').textContent = `$${netIncome.toLocaleString()}`;
+    document.getElementById('net-income').style.color = netIncome < 0 ? '#dc3545' : '#28a745';
+}
+
+// 更新需求趨勢圖表
+function updateDemandChart() {
+    const bar = document.createElement('div');
+    bar.className = 'chart-bar';
+    bar.style.height = `${gameState.demandIndex}%`;
+    document.getElementById('demand-chart').innerHTML = '';
+    document.getElementById('demand-chart').appendChild(bar);
+}
+
+// 更新競爭趨勢圖表
+function updateCompetitionChart() {
+    const bar = document.createElement('div');
+    bar.className = 'chart-bar';
+    bar.style.height = `${gameState.competitionIndex}%`;
+    document.getElementById('competition-chart').innerHTML = '';
+    document.getElementById('competition-chart').appendChild(bar);
+}
+
+// 數據見解應用
+function applyInsightBonuses() {
+    gameState.insightBonuses = {
+        productRevenue: 0,
+        developmentSpeed: 0,
+        marketShare: 0,
+        brandReputation: 0,
+        rdEfficiency: 0
+    };
+    
+    gameState.activeInsights.forEach(insight => {
+        const insightData = gameConfig.dataInsights.find(data => data.id === insight);
+        if (insightData && insightData.bonus) {
+            gameState.insightBonuses[insightData.bonus.type] += insightData.bonus.value;
+        }
+    });
+    
+    if (gameState.insightBonuses.productRevenue > 0) {
+        gameState.products.forEach(product => {
+            if (!product.inDevelopment) {
+                product.revenue = Math.floor(product.revenue * (1 + gameState.insightBonuses.productRevenue));
+            }
+        });
+    }
+}
+
+// 顯示數據見解
+function updateDataInsights() {
+    if (!gameState.dataAnalyticsBuilt || gameState.activeInsights.length === 0) return;
+    
+    let insightsHTML = '';
+    gameState.activeInsights.forEach(insightId => {
+        const insight = gameConfig.dataInsights.find(d => d.id === insightId);
+        if (insight) {
+            insightsHTML += `<div class="data-insight-box">
+                <h4>${insight.title}</h4>
+                <p>${insight.content}</p>
+                <div class="insight-bonus">獎勵效果: ${insight.bonus.description}</div>
+            </div>`;
+        }
+    });
+    
+    document.getElementById('data-insights').innerHTML = insightsHTML;
+}
+
+// 更新產品列表
+function updateProductList() {
+    const productListEl = document.getElementById('product-list');
+    if (gameState.products.length === 0) {
+        productListEl.innerHTML = '<p>尚未開發任何產品。開始研發新產品吧！</p>';
+        return;
+    }
+    
+    productListEl.innerHTML = '';
+    gameState.products.forEach((product, index) => {
+        const productCard = document.createElement('div');
+        productCard.className = 'product-card';
+        if (product.inDevelopment) productCard.classList.add('research-active');
+        
+        let statusText = product.inDevelopment 
+            ? `研發中 (${product.developmentProgress}/${product.developmentTime} 季度)` 
+            : `已上市 - 等級 ${product.level}`;
+        
+        productCard.innerHTML = `
+            <h4>${product.name}</h4>
+            <p>${product.description}</p>
+            ${product.inDevelopment ? 
+                `<div class="product-progress">
+                    <p>研發進度:</p>
+                    <progress value="${product.developmentProgress}" max="${product.developmentTime}"></progress>
+                </div>` 
+                : ''}
+            <div class="product-stats">
+                <span>${statusText}</span>
+                ${!product.inDevelopment ? `<span>收入: $${product.revenue.toLocaleString()}/季度</span>` : ''}
+            </div>
+            ${!product.inDevelopment ? `
+            <div style="margin-top: 10px; text-align: center;">
+                <button onclick="upgradeSpecificProduct(${index})" ${gameState.funds < 20000 ? 'disabled' : ''}>升級產品 ($20,000)</button>
+            </div>` : ''}
+        `;
+        
+        productListEl.appendChild(productCard);
+    });
+}
+
+// 研發新產品
+function developProduct() {
+    if (gameState.funds < 50000) {
+        showNotification('資金不足以研發新產品！', 'error');
+        return;
+    }
+    
+    if (gameState.patents === 0 && gameState.areaSpecificFactors.initialPatentRequirement) {
+        showNotification('此領域需要先取得專利才能開發產品！', 'warning');
+        return;
+    }
+    
+    const templates = gameConfig.productTemplates[gameState.area];
+    const availableProducts = templates.filter(p => 
+        !gameState.products.some(existingProduct => existingProduct.name === p.name)
+    );
+    
+    if (availableProducts.length === 0) {
+        showNotification('所有可用產品都已開發！', 'warning');
+        return;
+    }
+    
+    let productOptions = '';
+    availableProducts.forEach((product, index) => {
+        const adjustedRevenue = Math.round(product.revenue * gameConfig.difficultySettings[gameState.difficulty].revenueMultiplier);
+        const devSpeedBonus = gameState.insightBonuses.developmentSpeed;
+        const adjustedDevelopment = devSpeedBonus > 0 ? 
+            Math.max(1, Math.floor(product.development * (1 - devSpeedBonus))) : 
+            product.development;
+        
+        productOptions += `
+        <div style="background-color: rgba(0,0,0,0.1); padding: 10px; margin: 10px 0; border-radius: 5px;">
+            <h3>${product.name}</h3>
+            <p>${product.description}</p>
+            <p>研發成本: $${product.cost.toLocaleString()}</p>
+            <p>預計季度收入: $${adjustedRevenue.toLocaleString()}</p>
+            <p>研發週期: ${adjustedDevelopment} 季度</p>
+            ${devSpeedBonus > 0 ? `<p style="color: #28a745;">開發時間減少: ${Math.round(devSpeedBonus * 100)}%</p>` : ''}
+            <button onclick="selectProductToDevelop(${index})">選擇此產品</button>
+        </div>
+        `;
+    });
+    
+    openModal('選擇要研發的產品', productOptions);
+    window.availableProductsTemp = availableProducts;
+}
+
+// 產品開發選擇處理
+window.selectProductToDevelop = function(index) {
+    const product = window.availableProductsTemp[index];
+    
+    if (gameState.funds < product.cost) {
+        showNotification('資金不足以研發此產品！', 'error');
+        return;
+    }
+    
+    gameState.funds -= product.cost;
+    gameState.opExpenses += product.cost;
+    
+    const rdBonus = gameState.insightBonuses.rdEfficiency;
+    const successRate = gameState.successRates.developProduct * (1 + (gameState.rdCapability - 1) * 0.2) * (1 + rdBonus);
+    
+    if (isActionSuccessful(successRate)) {
+        const revMultiplier = gameConfig.difficultySettings[gameState.difficulty].revenueMultiplier;
+        const productRevBonus = gameState.insightBonuses.productRevenue;
+        const adjustedRevenue = Math.round(product.revenue * revMultiplier * (1 + productRevBonus));
+        
+        const devSpeedBonus = gameState.insightBonuses.developmentSpeed;
+        const adjustedDevelopment = devSpeedBonus > 0 ? 
+            Math.max(1, Math.floor(product.development * (1 - devSpeedBonus))) : 
+            product.development;
+        
+        const newProduct = {
+            ...product,
+            revenue: adjustedRevenue,
+            developmentProgress: 0,
+            developmentTime: adjustedDevelopment,
+            level: 1,
+            inDevelopment: true
+        };
+        
+        gameState.products.push(newProduct);
+        gameState.productInDevelopment = true;
+        
+        const developmentMessage = devSpeedBonus > 0 ?
+            `開始研發新產品: ${product.name}，受數據見解影響，預計在${adjustedDevelopment}個季度後完成(縮短了${Math.round(devSpeedBonus * 100)}%)。` :
+            `開始研發新產品: ${product.name}，預計在${adjustedDevelopment}個季度後完成。`;
+        
+        addEventLog(developmentMessage);
+        showNotification(`開始研發: ${product.name}`, 'success');
+        
+        if (Math.random() < 0.3) {
+            gameState.techStrategyLevel += 1;
+            addEventLog(`通過新產品研發，提升了公司的技術策略等級至${gameState.techStrategyLevel}級。`);
+        }
+    } else {
+        addEventLog(`嘗試研發新產品 ${product.name} 遇到困難，研發過程無法啟動。`);
+        showNotification(`產品研發啟動失敗`, 'error');
+    }
+    
+    closeModal();
+    updateUI();
+    updateFinancialSummary();
+};
+
+// 升級產品處理
+window.upgradeSpecificProduct = function(index) {
+    if (gameState.funds < 20000) {
+        showNotification('資金不足以升級產品！', 'error');
+        return;
+    }
+    
+    const product = gameState.products[index];
+    
+    if (product.inDevelopment) {
+        showNotification('產品仍在研發中，無法升級！', 'warning');
+        return;
+    }
+    
+    gameState.funds -= 20000;
+    gameState.opExpenses += 20000;
+    
+    const rdBonus = gameState.insightBonuses.rdEfficiency;
+    const successRate = gameState.successRates.upgradeProduct * (1 + (gameState.rdCapability - 1) * 0.1) * (1 + rdBonus);
+    
+    if (isActionSuccessful(successRate)) {
+        product.level += 1;
+        const productRevBonus = gameState.insightBonuses.productRevenue;
+        product.revenue = Math.round(product.revenue * 1.3 * (1 + productRevBonus));
+        
+        addEventLog(`升級產品: ${product.name} 到等級 ${product.level}，季度收入增加到 $${product.revenue.toLocaleString()}`);
+        showNotification(`${product.name} 升級成功！`, 'success');
+        
+        if (Math.random() < 0.2) {
+            gameState.techStrategyLevel += 1;
+            addEventLog(`通過產品升級，提升了公司的技術策略等級至${gameState.techStrategyLevel}級。`);
+        }
+    } else {
+        addEventLog(`升級產品 ${product.name} 時遇到技術困難，升級失敗。`);
+        showNotification(`產品升級失敗`, 'error');
+    }
+    
+    updateUI();
+    updateFinancialSummary();
+};
+
+// 升級產品選擇UI
+function upgradeProduct() {
+    const availableProducts = gameState.products.filter(p => !p.inDevelopment);
+    
+    if (availableProducts.length === 0) {
+        showNotification('沒有可升級的產品！', 'warning');
+        return;
+    }
+    
+    if (gameState.funds < 20000) {
+        showNotification('資金不足以升級產品！', 'error');
+        return;
+    }
+    
+    let productOptions = '';
+    availableProducts.forEach((product, index) => {
+        const actualIndex = gameState.products.findIndex(p => p.name === product.name);
+        const productRevBonus = gameState.insightBonuses.productRevenue;
+        const newRevenue = Math.round(product.revenue * 1.3 * (1 + productRevBonus));
+        
+        productOptions += `
+        <div style="background-color: rgba(0,0,0,0.1); padding: 10px; margin: 10px 0; border-radius: 5px;">
+            <h3>${product.name}</h3>
+            <p>當前等級: ${product.level}</p>
+            <p>當前季度收入: $${product.revenue.toLocaleString()}</p>
+            <p>升級後預計季度收入: $${newRevenue.toLocaleString()}</p>
+            ${productRevBonus > 0 ? `<p style="color: #28a745;">數據見解加成: +${Math.round(productRevBonus * 100)}%</p>` : ''}
+            <button onclick="upgradeSpecificProduct(${actualIndex})">升級此產品</button>
+        </div>
+        `;
+    });
+    
+    openModal('選擇要升級的產品', productOptions);
+}
+
+// 申請專利
+function applyPatent() {
+    if (gameState.funds < 30000) {
+        showNotification('資金不足以申請專利！', 'error');
+        return;
+    }
+    
+    const patents = gameConfig.patentLibrary[gameState.area];
+    const shuffled = [...patents].sort(() => 0.5 - Math.random());
+    const selectedPatents = shuffled.slice(0, 2);
+    
+    let patentOptions = `<p>選擇要申請的專利 (成本: $30,000)</p>`;
+    selectedPatents.forEach((patent, index) => {
+        patentOptions += `
+        <div style="background-color: rgba(0,0,0,0.1); padding: 10px; margin: 10px 0; border-radius: 5px;">
+            <h3>${patent.name}</h3>
+            <p>${patent.description}</p>
+            <button onclick="applySpecificPatent(${index}, '${patent.name}', '${patent.description}')">申請此專利</button>
+        </div>
+        `;
+    });
+    
+    openModal('申請專利', patentOptions);
+    window.selectedPatentsTemp = selectedPatents;
+}
+
+// 申請專利處理
+window.applySpecificPatent = function(index, name, description) {
+    if (gameState.funds < 30000) {
+        showNotification('資金不足以申請專利！', 'error');
+        return;
+    }
+    
+    gameState.funds -= 30000;
+    gameState.opExpenses += 30000;
+    
+    const rdBonus = gameState.insightBonuses.rdEfficiency;
+    const successRate = gameState.successRates.applyPatent * (1 + (gameState.rdCapability - 1) * 0.2) * (1 + rdBonus);
+    
+    if (isActionSuccessful(successRate)) {
+        gameState.patents += 1;
+        gameState.companyValuation += 200000;
+        gameState.marketShare += 2;
+        gameState.rdCapability += 0.3;
+        
+        addEventLog(`成功申請專利「${name}」，提升了公司的市場競爭力和估值。`);
+        showNotification('專利申請成功！', 'success');
+        
+        if (gameState.patents === 1 && gameState.areaSpecificFactors.initialPatentRequirement) {
+            document.getElementById('develop-product').disabled = false;
+            addEventLog(`取得第一項專利後，公司現在可以開始開發${document.getElementById('iot-area').textContent}產品了。`);
+        }
+        
+        if (Math.random() < 0.4) {
+            gameState.techStrategyLevel += 1;
+            addEventLog(`通過專利申請，提升了公司的技術策略等級至${gameState.techStrategyLevel}級。`);
+        }
+        
+        updateExpansionRequirements();
+    } else {
+        addEventLog(`專利「${name}」申請被拒絕，可能需要更多研發工作來改進技術。`);
+        showNotification('專利申請失敗', 'error');
+    }
+    
+    closeModal();
+    updateUI();
+    updateFinancialSummary();
+};
+
+// 營銷相關功能 - 大幅精簡代碼
+function launchAds() {
+    if (gameState.funds < 15000) {
+        showNotification('資金不足以投放廣告！', 'error');
+        return;
+    }
+    
+    gameState.funds -= 15000;
+    gameState.opExpenses += 15000;
+    
+    if (isActionSuccessful(gameState.successRates.launchAds)) {
+        gameState.brandReputation += 3;
+        gameState.marketShare += 1.0;
+        
+        if (gameState.products.filter(p => !p.inDevelopment).length > 0) {
+            const revenueIncrease = Math.floor(gameState.quarterlyRevenue * 0.15);
+            gameState.quarterlyRevenue += revenueIncrease;
+            
+            gameState.products.forEach(product => {
+                if (!product.inDevelopment) {
+                    product.revenue = Math.floor(product.revenue * 1.1);
+                }
+            });
+            
+            addEventLog(`廣告宣傳活動成功，提升了品牌知名度和產品銷售，季度收入增加$${revenueIncrease.toLocaleString()}。`);
+        } else {
+            addEventLog(`廣告宣傳活動成功，提升了品牌知名度，為產品推出做準備。`);
+        }
+        
+        showNotification('廣告投放成功！', 'success');
+        
+        if (Math.random() < 0.3) {
+            gameState.marketStrategyLevel += 1;
+            addEventLog(`通過成功的廣告活動，提升了公司的市場策略等級至${gameState.marketStrategyLevel}級。`);
+        }
+        
+        updateExpansionRequirements();
+        updateInvestorRequirements();
+    } else {
+        addEventLog(`廣告活動效果不佳，未能達到預期的宣傳效果。`);
+        showNotification('廣告效果不佳', 'warning');
+    }
+    
+    updateUI();
+    updateFinancialSummary();
+}
+
+function attendExhibition() {
+    if (gameState.funds < 40000) {
+        showNotification('資金不足以參加展會！', 'error');
+        return;
+    }
+    
+    gameState.funds -= 40000;
+    gameState.opExpenses += 40000;
+    
+    if (isActionSuccessful(gameState.successRates.attendExhibition)) {
+        gameState.brandReputation += 6;
+        gameState.marketShare += 3;
+        
+        if (gameState.products.filter(p => !p.inDevelopment).length > 0) {
+            const revenueIncrease = Math.floor(gameState.quarterlyRevenue * 0.25);
+            gameState.quarterlyRevenue += revenueIncrease;
+            
+            addEventLog(`科技展會參展非常成功，展示了公司產品，大幅提升了品牌知名度和產品銷售，季度收入增加$${revenueIncrease.toLocaleString()}。`);
+        } else {
+            addEventLog(`科技展會參展非常成功，介紹了公司願景和正在開發的產品，吸引了潛在客戶和投資者的關注。`);
+        }
+        
+        if (Math.random() < 0.5) {
+            const investmentAmount = Math.floor((100000 + Math.random() * 200000) * (1 + gameState.brandReputation / 20));
+            gameState.funds += investmentAmount;
+            
+            addEventLog(`在展會上吸引了投資者的注意，獲得了$${investmentAmount.toLocaleString()}的投資！`);
+            showNotification(`展會成功！獲得了$${investmentAmount.toLocaleString()}的投資！`, 'success');
+        } else {
+            showNotification('展會參與成功！', 'success');
+        }
+        
+        if (Math.random() < 0.5) {
+            gameState.marketStrategyLevel += 1;
+            addEventLog(`通過成功的展會參與，提升了公司的市場策略等級至${gameState.marketStrategyLevel}級。`);
+        }
+        
+        updateExpansionRequirements();
+        updateInvestorRequirements();
+    } else {
+        addEventLog(`參加科技展會，但未能引起足夠的關注，效果不如預期。`);
+        showNotification('展會效果一般', 'warning');
+    }
+    
+    updateUI();
+    updateFinancialSummary();
+}
+
+function expandChannels() {
+    if (gameState.funds < 25000) {
+        showNotification('資金不足以拓展銷售渠道！', 'error');
+        return;
+    }
+    
+    gameState.funds -= 25000;
+    gameState.opExpenses += 25000;
+    
+    if (isActionSuccessful(gameState.successRates.expandChannels)) {
+        gameState.marketShare += 2;
+        
+        if (gameState.products.filter(p => !p.inDevelopment).length > 0) {
+            const revenueIncrease = Math.floor(gameState.quarterlyRevenue * 0.2);
+            gameState.quarterlyRevenue += revenueIncrease;
+            
+            gameState.products.forEach(product => {
+                if (!product.inDevelopment) {
+                    product.revenue = Math.floor(product.revenue * 1.15);
+                }
+            });
+            
+            addEventLog(`成功與新的分銷商和零售商建立合作關係，擴大了產品銷售渠道，季度收入增加$${revenueIncrease.toLocaleString()}。`);
+        } else {
+            addEventLog(`成功與分銷商和零售商建立合作關係，為未來產品發布做準備。`);
+        }
+        
+        showNotification('銷售渠道拓展成功！', 'success');
+        
+        if (Math.random() < 0.4) {
+            gameState.marketStrategyLevel += 1;
+            addEventLog(`通過渠道拓展，提升了公司的市場策略等級至${gameState.marketStrategyLevel}級。`);
+        }
+    } else {
+        addEventLog(`嘗試拓展銷售渠道，但與潛在合作夥伴的談判未能達成協議。`);
+        showNotification('渠道拓展失敗', 'error');
+    }
+    
+    updateUI();
+    updateFinancialSummary();
+}
+
+// 數據相關功能
+function buildDataPlatform() {
+    if (gameState.funds < 60000) {
+        showNotification('資金不足以建立數據平台！', 'error');
+        return;
+    }
+    
+    if (gameState.dataAnalyticsBuilt) {
+        showNotification('數據分析平台已經建立！', 'warning');
+        return;
+    }
+    
+    gameState.funds -= 60000;
+    gameState.opExpenses += 60000;
+    
+    if (isActionSuccessful(gameState.successRates.buildDataPlatform)) {
+        gameState.dataAnalyticsBuilt = true;
+        gameState.dataCapability = 1;
+        
+        document.getElementById('data-insights').innerHTML = `
+            <p>數據平台已建立，但尚未收集足夠的數據。使用「數據分析」功能來獲取見解。</p>
+        `;
+        
+        addEventLog(`成功建立了物聯網數據分析平台，為數據價值挖掘做好準備。`);
+        showNotification('數據平台建立成功！', 'success');
+        
+        // 啟用AI助手
+        document.getElementById('ai-assistant').style.display = 'block';
+        document.getElementById('ai-suggestion').textContent = '數據平台已建立，現在可以進行數據分析獲取商業見解。';
+        
+        if (Math.random() < 0.5) {
+            gameState.techStrategyLevel += 1;
+            addEventLog(`通過建立數據平台，提升了公司的技術策略等級至${gameState.techStrategyLevel}級。`);
+        }
+    } else {
+        addEventLog(`數據平台建設遇到技術困難，暫時未能完成。`);
+        showNotification('數據平台建設失敗', 'error');
+    }
+    
+    updateUI();
+    updateFinancialSummary();
+}
+
+function analyzeData() {
+    if (!gameState.dataAnalyticsBuilt) {
+        showNotification('請先建立數據分析平台！', 'warning');
+        return;
+    }
+    
+    if (gameState.funds < 10000) {
+        showNotification('資金不足以進行數據分析！', 'error');
+        return;
+    }
+    
+    gameState.funds -= 10000;
+    gameState.opExpenses += 10000;
+    
+    if (isActionSuccessful(gameState.successRates.analyzeData)) {
+        const unusedInsights = gameConfig.dataInsights.filter(insight => 
+            !gameState.activeInsights.includes(insight.id)
+        );
+        
+        if (unusedInsights.length > 0) {
+            const newInsight = unusedInsights[Math.floor(Math.random() * unusedInsights.length)];
+            gameState.activeInsights.push(newInsight.id);
+            
+            if (newInsight.bonus.type === 'brandReputation') {
+                gameState.brandReputation += newInsight.bonus.value;
+                addEventLog(`數據分析發現了關於品牌定位的關鍵見解，立即提升了品牌聲譽${newInsight.bonus.value}點。`);
+            } else if (newInsight.bonus.type === 'marketShare') {
+                gameState.marketShare += newInsight.bonus.value;
+                addEventLog(`數據分析揭示了市場趨勢，幫助公司增加了${newInsight.bonus.value}%的市場份額。`);
+            } else {
+                addEventLog(`數據分析成功，獲得了「${newInsight.title}」見解，將持續帶來${newInsight.bonus.description}的效果。`);
+            }
+            
+            updateDataInsights();
+            applyInsightBonuses();
+            
+            showNotification(`獲得新數據見解：${newInsight.title}！`, 'success');
+        } else {
+            gameState.dataCapability += 0.5;
+            addEventLog(`深入分析數據，進一步優化了現有見解，提升了數據能力。`);
+            showNotification('增強了現有數據見解！', 'success');
+        }
+        
+        gameState.rdCapability += 0.3;
+        gameState.dataCapability += 0.4;
+        
+        if (Math.random() < 0.4) {
+            gameState.techStrategyLevel += 1;
+            addEventLog(`通過數據分析，提升了公司的技術策略等級至${gameState.techStrategyLevel}級。`);
+        }
+        
+        updateExpansionRequirements();
+        updateInvestorRequirements();
+    } else {
+        addEventLog(`數據分析未能產生有價值的見解，分析方法可能需要改進。`);
+        showNotification('數據分析未產生有價值結果', 'warning');
+    }
+    
+    updateUI();
+    updateFinancialSummary();
+}
+
+function launchDataService() {
+    if (!gameState.dataAnalyticsBuilt) {
+        showNotification('請先建立數據分析平台！', 'warning');
+        return;
+    }
+    
+    if (gameState.hasDataService) {
+        showNotification('已經推出了數據服務！', 'warning');
+        return;
+    }
+    
+    if (gameState.funds < 20000) {
+        showNotification('資金不足以推出數據服務！', 'error');
+        return;
+    }
+    
+    gameState.funds -= 20000;
+    gameState.opExpenses += 20000;
+    
+    if (isActionSuccessful(gameState.successRates.launchDataService)) {
+        gameState.hasDataService = true;
+        
+        const revMultiplier = gameConfig.difficultySettings[gameState.difficulty].revenueMultiplier;
+        const insightBonus = gameState.activeInsights.length * 0.1;
+        const serviceRevenue = Math.round((20000 + Math.floor(Math.random() * 15000) * gameState.dataCapability) * revMultiplier * (1 + insightBonus));
+        gameState.quarterlyRevenue += serviceRevenue;
+        
+        addEventLog(`成功推出了數據分析服務，為企業客戶提供物聯網數據見解，每季度帶來約$${serviceRevenue.toLocaleString()}的額外收入。`);
+        showNotification('數據服務推出成功！', 'success');
+        
+        if (Math.random() < 0.5) {
+            gameState.opsStrategyLevel += 1;
+            addEventLog(`通過推出數據服務，提升了公司的運營策略等級至${gameState.opsStrategyLevel}級。`);
+        }
+    } else {
+        addEventLog(`數據服務推出遇到市場阻力，可能需要更好的市場定位或改進服務內容。`);
+        showNotification('數據服務推出失敗', 'error');
+    }
+    
+    updateUI();
+    updateFinancialSummary();
+}
+
+// 營運相關功能
+function hireStaff() {
+    if (gameState.funds < 10000) {
+        showNotification('資金不足以招聘員工！', 'error');
+        return;
+    }
+    
+    const staffTypes = [
+        { title: '研發工程師', benefit: '研發能力 +0.5', effect: () => { gameState.rdCapability += 0.5; } },
+        { title: '數據分析師', benefit: '數據分析能力 +0.5', effect: () => { gameState.dataCapability += 0.5; } },
+        { title: '市場專員', benefit: '品牌聲譽 +3', effect: () => { gameState.brandReputation += 3; } },
+        { title: '銷售人員', benefit: '產品收入 +5%', effect: () => { 
+            gameState.products.forEach(p => { 
+                if (!p.inDevelopment) p.revenue = Math.floor(p.revenue * 1.05); 
+            }); 
+        }}
+    ];
+    
+    let content = `<p>選擇要招聘的員工類型（成本：$10,000/季度）：</p>`;
+    staffTypes.forEach((type, index) => {
+        content += `
+        <div style="background-color: rgba(0,0,0,0.1); padding: 10px; margin: 10px 0; border-radius: 5px;">
+            <h3>${type.title}</h3>
+            <p>優勢: ${type.benefit}</p>
+            <button onclick="hireSpecificStaff(${index})">招聘</button>
+        </div>
+        `;
+    });
+    
+    openModal('招聘員工', content);
+    window.staffTypesTemp = staffTypes;
+}
+
+window.hireSpecificStaff = function(index) {
+    if (gameState.funds < 10000) {
+        showNotification('資金不足以招聘此員工！', 'error');
+        return;
+    }
+    
+    gameState.funds -= 10000;
+    gameState.opExpenses += 10000;
+    
+    if (isActionSuccessful(gameState.successRates.hireStaff)) {
+        gameState.staff += 1;
+        
+        const staffExpenseIncrease = Math.round(5000 * gameConfig.difficultySettings[gameState.difficulty].staffExpensesMultiplier);
+        gameState.staffExpenses += staffExpenseIncrease;
+        
+        const staffType = window.staffTypesTemp[index];
+        staffType.effect();
+        
+        addEventLog(`成功招聘了一名${staffType.title}，提升了公司的${staffType.benefit.split(' +')[0]}。`);
+        showNotification(`招聘成功！`, 'success');
+        
+        if (Math.random() < 0.3) {
+            gameState.opsStrategyLevel += 1;
+            addEventLog(`通過合理人員配置，提升了公司的運營策略等級至${gameState.opsStrategyLevel}級。`);
+        }
+        
+        updateExpansionRequirements();
+        updateInvestorRequirements();
+    } else {
+        addEventLog(`未能找到合適的${window.staffTypesTemp[index].title}候選人，招聘暫時失敗。`);
+        showNotification(`招聘失敗`, 'error');
+    }
+    
+    closeModal();
+    updateUI();
+    updateFinancialSummary();
+};
+
+function seekInvestors() {
+    if (!gameState.investorAccessible) {
+        showNotification('公司聲譽不足，無法吸引投資者！', 'warning');
+        return;
+    }
+    
+    if (gameState.funds < 5000) {
+        showNotification('資金不足以準備投資材料！', 'error');
+        return;
+    }
+    
+    gameState.funds -= 5000;
+    gameState.opExpenses += 5000;
+    
+    const successRate = gameState.successRates.seekInvestors;
+    
+    addEventLog(`尋找投資者，當前估值$${gameState.companyValuation.toLocaleString()}，成功率約${Math.round(successRate)}%。`);
+    
+    if (isActionSuccessful(successRate)) {
+        const baseAmount = 100000 + Math.random() * 200000;
+        const reputationMultiplier = 1 + gameState.brandReputation / 20;
+        const companyStageMultiplier = 1 + gameState.products.length * 0.2;
+        const difficultyMultiplier = gameState.difficulty === 'easy' ? 1.5 : 
+                                    gameState.difficulty === 'normal' ? 1.0 : 0.7;
+        
+        const investmentAmount = Math.floor(baseAmount * reputationMultiplier * companyStageMultiplier * difficultyMultiplier);
+        
+        gameState.funds += investmentAmount;
+        gameState.companyValuation = Math.floor(gameState.companyValuation * 1.2);
+        
+        addEventLog(`成功吸引了投資者的注意，獲得了$${investmentAmount.toLocaleString()}的投資！公司估值提升至$${gameState.companyValuation.toLocaleString()}。`);
+        showNotification(`獲得投資$${investmentAmount.toLocaleString()}！`, 'success');
+        
+        if (Math.random() < 0.4) {
+            gameState.opsStrategyLevel += 1;
+            addEventLog(`通過成功吸引投資，提升了公司的運營策略等級至${gameState.opsStrategyLevel}級。`);
+        }
+        
+        updateExpansionRequirements();
+    } else {
+        addEventLog(`與投資者會面，但未能打動他們。投資者認為公司需要更強的市場表現或產品線。`);
+        showNotification('未能獲得投資，再接再厲！', 'warning');
+    }
+    
+    updateUI();
+    updateFinancialSummary();
+}
+
+function expandGlobally() {
+    if (!gameState.globalExpansionPossible) {
+        showNotification('公司尚未達到國際擴張的條件！', 'warning');
+        return;
+    }
+    
+    if (gameState.funds < 100000) {
+        showNotification('資金不足以進行國際擴張！', 'error');
+        return;
+    }
+    
+    gameState.funds -= 100000;
+    gameState.opExpenses += 100000;
+    
+    if (isActionSuccessful(gameState.successRates.expandGlobally)) {
+        gameState.operationRegions += 1;
+        
+        const revenueMultiplier = 1.5;
+        gameState.quarterlyRevenue = Math.floor(gameState.quarterlyRevenue * revenueMultiplier);
+        
+        gameState.products.forEach(product => {
+            if (!product.inDevelopment) {
+                product.revenue = Math.floor(product.revenue * revenueMultiplier);
+            }
+        });
+        
+        gameState.companyValuation = Math.floor(gameState.companyValuation * 1.5);
+        
+        addEventLog(`公司成功擴展到國際市場！現在運營地區數量為${gameState.operationRegions}個，季度收入提升了${Math.floor((revenueMultiplier - 1) * 100)}%。`);
+        showNotification('國際擴張成功！', 'success');
+        
+        gameState.opsStrategyLevel += 1;
+        addEventLog(`通過成功的國際擴張，提升了公司的運營策略等級至${gameState.opsStrategyLevel}級。`);
+        
+        if (gameState.operationRegions >= 3 && gameState.companyValuation >= 10000000 && gameState.marketShare >= 20) {
+            gameVictory();
+        }
+    } else {
+        addEventLog(`國際擴張計劃遇到困難，可能需要更好的市場進入策略或更強的產品競爭力。`);
+        showNotification('國際擴張暫時失敗', 'error');
+    }
+    
+    updateUI();
+    updateFinancialSummary();
+}
+
+// 遊戲進程相關
+function updateMarketTrends() {
+    const demandChange = Math.floor(Math.random() * 11) - 3 + gameState.marketStrategyLevel;
+    gameState.demandIndex = Math.max(10, Math.min(100, gameState.demandIndex + demandChange));
+    
+    const competitionChange = Math.floor(Math.random() * 8) - 3 - gameState.patents/2;
+    gameState.competitionIndex = Math.max(10, Math.min(100, gameState.competitionIndex + competitionChange));
+    
+    updateDemandChart();
+    updateCompetitionChart();
+}
+
+function generateRandomEvent() {
+    const settings = gameConfig.difficultySettings[gameState.difficulty];
+    if (Math.random() < settings.randomEventChance) {
+        const goodEvents = [
+            {
+                title: "技術突破",
+                description: "你的研發團隊實現了技術突破，提升了研發能力！",
+                effect: () => {
+                    gameState.rdCapability += 0.5;
+                    showNotification("研發能力提升！", "success");
+                }
+            },
+            {
+                title: "媒體報導",
+                description: "一家知名科技媒體發表了關於你公司的正面報導，提升了品牌聲譽！",
+                effect: () => {
+                    gameState.brandReputation += 3;
+                    showNotification("品牌聲譽提升！", "success");
+                    updateExpansionRequirements();
+                    updateInvestorRequirements();
+                }
+            },
+            {
+                title: "市場需求增加",
+                description: "市場對物聯網產品的需求突然增加，帶來了更多訂單！",
+                effect: () => {
+                    gameState.quarterlyRevenue = Math.floor(gameState.quarterlyRevenue * 1.2);
+                    gameState.demandIndex += 5;
+                    showNotification("收入增加20%！", "success");
+                }
+            },
+            {
+                title: "突發訂單",
+                description: "一家大型企業對你的產品產生了興趣，下了一筆大訂單！",
+                effect: () => {
+                    const orderAmount = Math.floor(50000 * gameConfig.difficultySettings[gameState.difficulty].revenueMultiplier);
+                    gameState.funds += orderAmount;
+                    showNotification(`獲得大訂單收入 $${orderAmount.toLocaleString()}！`, "success");
+                }
+            }
+        ];
+        
+        const badEvents = [
+            {
+                title: "競爭對手新產品",
+                description: "一家競爭對手推出了新產品，對你的市場份額造成了壓力。",
+                effect: () => {
+                    gameState.marketShare = Math.max(0, gameState.marketShare - 1);
+                    gameState.quarterlyRevenue = Math.floor(gameState.quarterlyRevenue * 0.95);
+                    gameState.competitionIndex += 5;
+                    showNotification("市場份額略有下降", "warning");
+                }
+            },
+            {
+                title: "產品漏洞",
+                description: "你的一款產品被發現存在安全漏洞，需要進行修復。",
+                effect: () => {
+                    const fixCost = 10000;
+                    gameState.funds -= fixCost;
+                    gameState.opExpenses += fixCost;
+                    gameState.brandReputation -= 1;
+                    showNotification(`修復漏洞花費了$${fixCost.toLocaleString()}`, "warning");
+                    updateExpansionRequirements();
+                    updateInvestorRequirements();
+                }
+            }
+        ];
+        
+        const events = Math.random() < settings.badEventChance ? badEvents : goodEvents;
+        const event = events[Math.floor(Math.random() * events.length)];
+        
+        addEventLog(`【${event.title}】${event.description}`);
+        event.effect();
+    }
+}
+
+// 遊戲結束相關
+function gameVictory() {
+    openModal("恭喜！", `
+        <h3>你成功建立了一個物聯網帝國！</h3>
+        <p>經過 ${gameState.year} 年 ${gameState.quarter - 1} 個季度的努力，你的公司已成為行業領導者。</p>
+        <p>最終公司估值: $${gameState.companyValuation.toLocaleString()}</p>
+        <p>最終市場份額: ${gameState.marketShare}%</p>
+        <p>運營地區數量: ${gameState.operationRegions}</p>
+        <p>產品數量: ${gameState.products.length}</p>
+        <p>最終得分: ${gameState.score}</p>
+        <button onclick="location.reload()">再來一局</button>
+    `);
+}
+
+function gameOver(reason) {
+    openModal("遊戲結束", `
+        <h3>你的物聯網公司破產了！</h3>
+        <p>原因: ${reason}</p>
+        <p>公司存活了 ${gameState.year} 年 ${gameState.quarter - 1} 個季度。</p>
+        <p>最終公司估值: $${gameState.companyValuation.toLocaleString()}</p>
+        <p>最終市場份額: ${gameState.marketShare}%</p>
+        <p>最終得分: ${gameState.score}</p>
+        <button onclick="location.reload()">重新開始</button>
+    `);
+}
+
+// 進入下一季度
+function nextQuarter() {
+    gameState.opExpenses = 0;
+    
+    let quarterlyRevenue = 0;
+    gameState.products.forEach(product => {
+        if (!product.inDevelopment) {
+            quarterlyRevenue += product.revenue;
+        }
+    });
+    
+    if (gameState.hasDataService) {
+        const revMultiplier = gameConfig.difficultySettings[gameState.difficulty].revenueMultiplier;
+        const insightBonus = gameState.activeInsights.length * 0.1;
+        const serviceRevenue = Math.round((20000 + Math.floor(Math.random() * 15000) * gameState.dataCapability) * revMultiplier * (1 + insightBonus));
+        quarterlyRevenue += serviceRevenue;
+    }
+    
+    gameState.quarterlyRevenue = quarterlyRevenue;
+    
+    gameState.funds += quarterlyRevenue - gameState.staffExpenses;
+    
+    let completedProducts = 0;
+    for (let i = 0; i < gameState.products.length; i++) {
+        const product = gameState.products[i];
+        if (product.inDevelopment) {
+            product.developmentProgress += 1;
+            if (product.developmentProgress >= product.developmentTime) {
+                product.inDevelopment = false;
+                completedProducts++;
+                addEventLog(`產品 ${product.name} 研發完成，已上市銷售！`);
+                showNotification(`${product.name} 研發完成！`, 'success');
+                
+                const stillDeveloping = gameState.products.some(p => p.inDevelopment);
+                if (!stillDeveloping) {
+                    gameState.productInDevelopment = false;
+                }
+                
+                updateExpansionRequirements();
+            }
+        }
+    }
+    
+    updateMarketTrends();
+    generateRandomEvent();
+    
+    gameState.quarter += 1;
+    if (gameState.quarter > 4) {
+        gameState.quarter = 1;
+        gameState.year += 1;
+        addEventLog(`結束第${gameState.year - 1}年。年度總收入: $${(gameState.quarterlyRevenue * 4).toLocaleString()}。`);
+    }
+    
+    if (gameState.funds < 0) {
+        gameOver("資金耗盡");
+        return;
+    }
+    
+    if (gameState.operationRegions >= 3 && gameState.companyValuation >= 10000000 && gameState.marketShare >= 20) {
+        gameVictory();
+        return;
+    }
+    
+    addEventLog(`進入新的季度，公司資金: $${gameState.funds.toLocaleString()}，季度收入: $${gameState.quarterlyRevenue.toLocaleString()}`);
+    updateUI();
+    updateFinancialSummary();
+    updateSuccessRatesDisplay();
+}
+
+// 初始化遊戲
+initGame();
+</script>
+</body>
+</html>
